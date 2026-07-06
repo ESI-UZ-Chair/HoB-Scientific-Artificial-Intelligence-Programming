@@ -21,7 +21,7 @@ class DeepONet(pl.LightningModule):
             branch_layers: Number of layers in branch network (minimum 1)
         """
         super().__init__()
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=['args'])
         # External arguments
         self.args = args
         self.lr = args.lr if hasattr(args, 'lr') else 1e-3

@@ -18,6 +18,13 @@ import torch
 from src.dataset.dataset import DataModule
 from src.model.DeepONet import DeepONet
 
+# PyTorch 2.6 defaults checkpoint loading to weights_only=True. Older checkpoints
+# from this script include argparse.Namespace in the saved hyperparameters.
+try:
+    torch.serialization.add_safe_globals([argparse.Namespace])
+except AttributeError:
+    pass
+
 # Set non-interactive backend for plotting
 matplotlib.use('Agg')
 
