@@ -1,0 +1,24 @@
+# sweep.yaml
+program: sweep.py
+method: bayes       # or "random" or "grid"
+metric:
+  name: valid_residual    # your target metric to optimize
+  goal: minimize    # or "maximize"
+parameters:
+  batch_size:
+    values: [8, 16, 64, 128, 512]  # discrete batch size options
+  hidden_size:
+    values: [ 16, 32, 64, 128, 512, 1024]  # discrete batch size options
+  lr:
+    values: [0.05, 0.01, 0.007, 0.005, 0.001, 0.0007, 0.0005, 0.0001, 0.00001]
+  optimizer:
+    values: ["adam"]
+  max_epochs:
+    value: 1000
+  patience:
+    value: 25
+
+early_terminate:
+  type: hyperband
+  max_iter: 2000     # maximum epochs (max iterations)
+  eta: 3             # downsampling rate for successive halving
