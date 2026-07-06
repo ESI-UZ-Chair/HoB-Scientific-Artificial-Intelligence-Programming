@@ -123,7 +123,8 @@ def transform_data(data, z_net_list, z_gt_list, data_out, edge_index=[], edge_co
 def set_run_directory(args, safe_mode=True):
     # Generate a unique name for the run directory based on current timestamp and arguments
     name = (f'{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_MPSteps={args.mp_steps}'
-            f'_sharedMP={args.shared_mp}_layers={args.layers}_hidden={args.hidden}_batchsize={args.batch_size}_seed={args.seed}')
+            f'_sharedMP={args.shared_mp}_layers={args.layers}_hidden={args.hidden}_batchsize={args.batch_size}'
+            f'_seed={args.seed}_noise={args.noise}')
 
     # Create a Path object for the run directory
     chckp_path = Path(f'outputs/runs/{name}')

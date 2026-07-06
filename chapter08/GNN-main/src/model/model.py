@@ -17,7 +17,7 @@ import argparse
 class SimulatorGNN(pl.LightningModule):
     def __init__(self, args=None, mp_steps=15, input_size=2, output_size=1, hidden=128,
                  layers=2, model_dir='checkpoint/simulator.pth', pretrain=None,
-                 transforms=None, shared_mp=False, epochs=1, lr=1e-4, noise=0.0, device='cpu',
+                 transforms=None, shared_mp=False, epochs=1, lr=1e-4, noise=None, device='cpu',
                  optim_flag='cosine_annealing', mssg_flag=False):
         super().__init__()
 
@@ -45,7 +45,6 @@ class SimulatorGNN(pl.LightningModule):
         self.args = args
         self.input_size = input_size
         self.transforms = transforms
-        self.noise = args.noise
         self.shared_mp = shared_mp
         self.epochs = epochs
         self.lr = lr
@@ -54,7 +53,7 @@ class SimulatorGNN(pl.LightningModule):
         self.loaded_model = False if pretrain is None else True
         
         # noise
-        self.noise = noise
+        self.noise = float(noise if noise is not None else getattr(args, 'noise', 0.0))
 
         # Save results
         self.z_net_one_step_list, self.z_gt_one_step_list = [], []
@@ -438,7 +437,7 @@ class SimulatorGNN(pl.LightningModule):
 
     def add_noise(self, variable):
         """
-        Adds noise to a variable with higher relative noise in regions of higher values.
+        Adds absolute Gaussian noise to a variable.
         
         Args:
             variable (torch.Tensor): The input tensor to which noise is added.
