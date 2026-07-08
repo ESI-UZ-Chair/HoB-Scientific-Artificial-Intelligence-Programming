@@ -42,5 +42,10 @@ if __name__ == '__main__':
         raise ValueError(f"Unknown model type: {args.model}")
     
 
-    rrmse_error = simulator.test_rollout(dataset, full_rollout=args.full_rollout, save_path=str(pretrain_path.parent.parent))
+    rrmse_error = simulator.test_rollout(
+        dataset,
+        full_rollout=args.full_rollout,
+        save_path=str(pretrain_path.parent.parent),
+        selected_sim=args.sim,
+    )
     print(f"Rollout RMSE error: {rrmse_error}")

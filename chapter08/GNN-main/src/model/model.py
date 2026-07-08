@@ -178,11 +178,12 @@ class SimulatorGNN(pl.LightningModule):
         self.z_net_n_step_list.append(z_net_n_step_rollout)
         self.z_gt_n_step_list.append(z_gt_n_step_rollout)
 
-    def test_rollout(self, dataset, full_rollout=True, save_path='./'):
+    def test_rollout(self, dataset, full_rollout=True, save_path='./', selected_sim=None):
 
         name_steps = 'n_steps' if full_rollout else 'one_step'
 
         z_net_list, z_gt_list = [], []
+        x_list, y_list = [], []
         rmse_list, rrmse_list = [], []
         mse_list, mse_list_roll = [], []
         if self.mssg_flag:
@@ -193,6 +194,8 @@ class SimulatorGNN(pl.LightningModule):
         for i in range(simulations):
             sim = dataset[i]
             z_net, z_gt, mssg_list = self.integrate_sim(sim, full_rollout=full_rollout)
+            x_list.append(self.X)
+            y_list.append(self.Y)
             if self.mssg_flag:
                 mssg_snaps = [mss[0] for mss in mssg_list]
                 out_snaps = [mss[1] for mss in mssg_list]
@@ -223,10 +226,15 @@ class SimulatorGNN(pl.LightningModule):
             mse_tensor = torch.tensor(mse_list)
             worst_idx = torch.argmax(mse_tensor).item()
             best_idx = torch.argmin(mse_tensor).item()
+            selected_idx = selected_sim
 
             # Print RMSE for best and worst cases
             print(f'Worst RMSE: {torch.sqrt(mse_tensor[worst_idx]):.4f}')
             print(f'Best RMSE: {torch.sqrt(mse_tensor[best_idx]):.4f}')
+            if selected_idx is not None:
+                if selected_idx < 0 or selected_idx >= simulations:
+                    raise ValueError(f"Invalid selected_sim: {selected_idx}. Must be between 0 and {simulations - 1}.")
+                print(f'Selected sim {selected_idx} RMSE: {torch.sqrt(mse_tensor[selected_idx]):.4f}')
             
             # Generate box plots and rollout plots
             boxplot_error(rmse_list, name=f'test_rmse_{name_steps}', error='RMSE', save_path=save_path)
@@ -236,14 +244,20 @@ class SimulatorGNN(pl.LightningModule):
                 plot_mse_rollout_mean_std(mse_list_roll, name=f'test_{name_steps}_rollout_mse_mean_std', save_path=save_path, save=True)
                 
                 # Plot combined and 3D scatter for worst case
-                plot_combined(z_net_list[worst_idx], z_gt_list[worst_idx], self.X, self.Y, name=f'test_{name_steps}_rollout_combined_worst', with_wandb=False, save_dir=save_path)
-                plot_3D_scatter(z_net_list[worst_idx], z_gt_list[worst_idx], self.X, self.Y, name=f'test_{name_steps}_rollout_scatter_worst', with_wandb=False, save_dir=save_path)
+                plot_combined(z_net_list[worst_idx], z_gt_list[worst_idx], x_list[worst_idx], y_list[worst_idx], name=f'test_{name_steps}_rollout_combined_worst', with_wandb=False, save_dir=save_path)
+                plot_3D_scatter(z_net_list[worst_idx], z_gt_list[worst_idx], x_list[worst_idx], y_list[worst_idx], name=f'test_{name_steps}_rollout_scatter_worst', with_wandb=False, save_dir=save_path)
                 
                 # Plot combined and 3D scatter for best case
-                plot_combined(z_net_list[best_idx], z_gt_list[best_idx], self.X, self.Y, name=f'test_{name_steps}_rollout_combined_best', with_wandb=False, save_dir=save_path)
-                plot_3D_scatter(z_net_list[best_idx], z_gt_list[best_idx], self.X, self.Y, name=f'test_{name_steps}_rollout_scatter_best', with_wandb=False, save_dir=save_path)
+                plot_combined(z_net_list[best_idx], z_gt_list[best_idx], x_list[best_idx], y_list[best_idx], name=f'test_{name_steps}_rollout_combined_best', with_wandb=False, save_dir=save_path)
+                plot_3D_scatter(z_net_list[best_idx], z_gt_list[best_idx], x_list[best_idx], y_list[best_idx], name=f'test_{name_steps}_rollout_scatter_best', with_wandb=False, save_dir=save_path)
+                
+                if selected_idx is not None:
+                    plot_combined(z_net_list[selected_idx], z_gt_list[selected_idx], x_list[selected_idx], y_list[selected_idx], name=f'test_{name_steps}_rollout_combined_sim_{selected_idx}', with_wandb=False, save_dir=save_path)
+                    plot_3D_scatter(z_net_list[selected_idx], z_gt_list[selected_idx], x_list[selected_idx], y_list[selected_idx], name=f'test_{name_steps}_rollout_scatter_sim_{selected_idx}', with_wandb=False, save_dir=save_path)
             else:
-                plot_frame_2d(z_net_list[best_idx], z_gt_list[best_idx], self.X, self.Y, frame_idx=1, wandb_flag=False, save_dir=save_path)
+                plot_frame_2d(z_net_list[best_idx], z_gt_list[best_idx], x_list[best_idx], y_list[best_idx], frame_idx=1, wandb_flag=False, save_dir=save_path, name=f'test_{name_steps}_rollout_best')
+                if selected_idx is not None:
+                    plot_frame_2d(z_net_list[selected_idx], z_gt_list[selected_idx], x_list[selected_idx], y_list[selected_idx], frame_idx=1, wandb_flag=False, save_dir=save_path, name=f'test_{name_steps}_rollout_sim_{selected_idx}')
 
             print('Plots done!!')
 
